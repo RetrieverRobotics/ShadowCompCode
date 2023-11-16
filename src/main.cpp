@@ -85,6 +85,7 @@ improved_pid_move(61.0,180.0,100.0);
 	pros::Motor back_right_mtr(13);
 	pros::Motor intake(5); //CHANGE SHOOTER & INTAKE, TEMP NUMBERS!!!
 	pros::Motor shooter(6);
+	pros::ADIGyro gyro(9);
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
 	
