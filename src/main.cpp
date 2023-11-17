@@ -97,7 +97,7 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
-	while (pros::c::millis() - start_time < 5000)
+	while (pros::c::millis() - start_time < 3000)
 	{
 		front_left_mtr.move(SET_SPEEDS(HALF));
 		front_right_mtr.move(SET_SPEEDS(HALF));
