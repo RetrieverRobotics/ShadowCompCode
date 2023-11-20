@@ -79,6 +79,9 @@ improved_pid_move(61.0,180.0,100.0);
 */
 	const u_int32_t start_time = pros::c::millis();
 	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
+	const int TILES = 3;
+	const int MILISECONDPERTILE = 1000; //milisecond/tile when set at HALF speed
+	const int RUN_TIME = TILES * MILISECONDPERTILE;
 	pros::Motor front_left_mtr(2);
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
@@ -87,7 +90,7 @@ improved_pid_move(61.0,180.0,100.0);
 	pros::Motor shooter(6);
 	pros::ADIGyro gyro(9);
 	front_right_mtr.set_reversed(true);
-	back_right_mtr.set_reversed(true);
+	back_right_mtr.set_reversed(tm rue);
 	
 	auto move_all_motors = [front_left_mtr, front_right_mtr, back_left_mtr, back_right_mtr]
 	(int speed) {
@@ -97,12 +100,10 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
-	while (pros::c::millis() - start_time < 3000)
+	//loop for how many seconds the robot should move
+	while (pros::c::millis() - start_time < RUN_TIME)
 	{
-		front_left_mtr.move(SET_SPEEDS(HALF));
-		front_right_mtr.move(SET_SPEEDS(HALF));
-		back_left_mtr.move(SET_SPEEDS(HALF));
-		back_right_mtr.move(SET_SPEEDS(HALF));
+		move_all_motors(SET_SPEEDS(HALF));
 	}
 
 	front_left_mtr.move(SET_SPEEDS(ZERO));
