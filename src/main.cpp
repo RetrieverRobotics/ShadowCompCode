@@ -24,7 +24,7 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+	pros::lcd::set_text(1, "Chaos Control!");
 	pros::lcd::register_btn1_cb(on_center_button);
 }
 
@@ -81,7 +81,7 @@ improved_pid_move(61.0,180.0,100.0);
 	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 	const int TILES = 3;
 	const int MILISECONDPERTILE = 1000; //milisecond/tile when set at HALF speed
-	const int RUN_TIME = TILES * MILISECONDPERTILE;
+	const int RUN_TIME = 5000;
 	pros::Motor front_left_mtr(2);
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
@@ -90,7 +90,7 @@ improved_pid_move(61.0,180.0,100.0);
 	pros::Motor shooter(6);
 	pros::ADIGyro gyro(9);
 	front_right_mtr.set_reversed(true);
-	back_right_mtr.set_reversed(tm rue);
+	back_right_mtr.set_reversed(true); 
 	
 	auto move_all_motors = [front_left_mtr, front_right_mtr, back_left_mtr, back_right_mtr]
 	(int speed) {
@@ -100,17 +100,31 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
+	//pros::lcd::set_text(1, "Autonomous");
+
+	move_all_motors(SET_SPEEDS(HALF));
+	
+	//pros::lcd::set_text(2, std::to_string(front_left_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(3, std::to_string(back_left_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(5, std::to_string(front_right_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(6, std::to_string(back_right_mtr.get_actual_velocity()));
+
 	//loop for how many seconds the robot should move
 	while (pros::c::millis() - start_time < RUN_TIME)
 	{
-		move_all_motors(SET_SPEEDS(HALF));
+		pros::screen::print(pros::E_TEXT_MEDIUM, 2, "%d", front_left_mtr.get_actual_velocity());
+		pros::screen::print(pros::E_TEXT_MEDIUM, 3, "%d", back_left_mtr.get_actual_velocity());
+		pros::screen::print(pros::E_TEXT_MEDIUM, 4, "%d", front_right_mtr.get_actual_velocity());
+		pros::screen::print(pros::E_TEXT_MEDIUM, 5, "%d", back_right_mtr.get_actual_velocity());
 	}
 
-	front_left_mtr.move(SET_SPEEDS(ZERO));
-	front_right_mtr.move(SET_SPEEDS(ZERO));
-	back_left_mtr.move(SET_SPEEDS(ZERO));
-	back_right_mtr.move(SET_SPEEDS(ZERO));
-}
+	//pros::lcd::set_text(2, std::to_string(front_left_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(3, std::to_string(back_left_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(5, std::to_string(front_right_mtr.get_actual_velocity()));
+	//pros::lcd::set_text(6, std::to_string(back_right_mtr.get_actual_velocity()));
+
+	move_all_motors(SET_SPEEDS(ZERO));
+}	
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -174,10 +188,14 @@ void opcontrol() {
 		}
 		
 		//Climber
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)){}
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)){
+
+		}
 
 
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){}
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
+			
+		}
 
 
 		//For Drive Train
