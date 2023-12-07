@@ -100,50 +100,19 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
-	//pros::lcd::set_text(1, "Autonomous");
-
-	//move_all_motors(SET_SPEEDS(HALF));
-	
-	//pros::lcd::set_text(2, std::to_string(front_left_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(3, std::to_string(back_left_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(5, std::to_string(front_right_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(6, std::to_string(back_right_mtr.get_actual_velocity()));
-
-	//loop for how many seconds the robot should move
-	while (pros::c::millis() - start_time < RUN_TIME)
+	while (pros::c::millis() - start_time < 3000)
 	{
-		//Move forward for one second
-		move_all_motors(SET_SPEEDS(HALF));
-		//Align/angle with the bar
-		while(pros::c::millis() - start_time > 1000 && pros::c::millis() - start_time < 2000)
-		{
-			move_all_motors(SET_SPEEDS(ZERO));
-			front_left_mtr.move(HALF);
-			back_left_mtr.move(HALF);
-		}
-		//Reverse to the bar
-		while(pros::c::millis() - start_time > 2000 && pros::c::millis() - start_time < RUN_TIME)
-		{
-			move_all_motors(SET_SPEEDS(ZERO));
-			front_right_mtr.set_reversed(false);
-			back_right_mtr.set_reversed(false);
-			front_left_mtr.set_reversed(true);
-			back_left_mtr.set_reversed(true);
-			move_all_motors(SET_SPEEDS(HALF));   
-		}
-		//pros::screen::print(pros::E_TEXT_MEDIUM, 2, "%d", front_left_mtr.get_actual_velocity());
-		//pros::screen::print(pros::E_TEXT_MEDIUM, 3, "%d", back_left_mtr.get_actual_velocity());
-		//pros::screen::print(pros::E_TEXT_MEDIUM, 4, "%d", front_right_mtr.get_actual_velocity());
-		//pros::screen::print(pros::E_TEXT_MEDIUM, 5, "%d", back_right_mtr.get_actual_velocity());
+		front_left_mtr.move(SET_SPEEDS(HALF));
+		front_right_mtr.move(SET_SPEEDS(HALF));
+		back_left_mtr.move(SET_SPEEDS(HALF));
+		back_right_mtr.move(SET_SPEEDS(HALF));
 	}
 
-	//pros::lcd::set_text(2, std::to_string(front_left_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(3, std::to_string(back_left_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(5, std::to_string(front_right_mtr.get_actual_velocity()));
-	//pros::lcd::set_text(6, std::to_string(back_right_mtr.get_actual_velocity()));
-
-	move_all_motors(SET_SPEEDS(ZERO));
-}	
+	front_left_mtr.move(SET_SPEEDS(ZERO));
+	front_right_mtr.move(SET_SPEEDS(ZERO));
+	back_left_mtr.move(SET_SPEEDS(ZERO));
+	back_right_mtr.move(SET_SPEEDS(ZERO));
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
