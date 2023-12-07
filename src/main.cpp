@@ -100,13 +100,33 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
-	while (pros::c::millis() - start_time < 3000)
+	while (pros::c::millis() - start_time < RUN_TIME)
 	{
-		front_left_mtr.move(SET_SPEEDS(HALF));
-		front_right_mtr.move(SET_SPEEDS(HALF));
-		back_left_mtr.move(SET_SPEEDS(HALF));
-		back_right_mtr.move(SET_SPEEDS(HALF));
+		//Move forward for one second
+		move_all_motors(SET_SPEEDS(HALF));
+		//Align/angle with the bar
+		while(pros::c::millis() - start_time > 1000 && pros::c::millis() - start_time < 2000)
+		{
+			move_all_motors(SET_SPEEDS(ZERO));
+			front_left_mtr.move(HALF);
+			back_left_mtr.move(HALF);
+		}
+		//Reverse to the bar
+		while(pros::c::millis() - start_time > 2000 && pros::c::millis() - start_time < RUN_TIME)
+		{
+			move_all_motors(SET_SPEEDS(ZERO));
+			front_right_mtr.set_reversed(false);
+			back_right_mtr.set_reversed(false);
+			front_left_mtr.set_reversed(true);
+			back_left_mtr.set_reversed(true);
+			move_all_motors(SET_SPEEDS(HALF));   
+		}
+		//pros::screen::print(pros::E_TEXT_MEDIUM, 2, "%d", front_left_mtr.get_actual_velocity());
+		//pros::screen::print(pros::E_TEXT_MEDIUM, 3, "%d", back_left_mtr.get_actual_velocity());
+		//pros::screen::print(pros::E_TEXT_MEDIUM, 4, "%d", front_right_mtr.get_actual_velocity());
+		//pros::screen::print(pros::E_TEXT_MEDIUM, 5, "%d", back_right_mtr.get_actual_velocity());
 	}
+
 
 	front_left_mtr.move(SET_SPEEDS(ZERO));
 	front_right_mtr.move(SET_SPEEDS(ZERO));
