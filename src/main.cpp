@@ -216,7 +216,7 @@ void opcontrol() {
 			}
 		}
 		
-		//Climber
+		//Climber test
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)){
 
 		}
