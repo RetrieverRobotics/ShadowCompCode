@@ -69,7 +69,7 @@ improved_pid_move(122.0,92.4,100.0);
 new_gyro_p_turn(84.3,100.0);
 improved_pid_move(25.5,84.3,100.0);
 new_gyro_p_turn(-84.2,100.0);
-improved_pid_move(176.2,-84.2,100.0);
+improved_pid_move(176.2,-84.2,100.0); 
 new_gyro_p_turn(-158.8,100.0);
 improved_pid_move(182.5,-158.8,100.0);
 new_gyro_p_turn(94.4,100.0);
@@ -100,6 +100,27 @@ improved_pid_move(61.0,180.0,100.0);
 		back_right_mtr.move(speed);
 	};
 
+	//use THREE_QUARTERS speed
+	auto turn_ninety_degrees_right = [front_left_mtr, back_left_mtr]
+	(int speed) {
+		front_left_mtr.move(speed);
+		back_left_mtr.move(speed);
+	};
+
+	//use HALF speed maybe?
+	auto turn_fourtyfive_degrees_right = [front_left_mtr, back_left_mtr]
+	(int speed) {
+		front_left_mtr.move(speed);
+		back_left_mtr.move(speed);
+	};
+
+	//use THREE_QUARTERS speed
+	auto turn_ninety_degrees_left = [front_right_mtr, back_right_mtr]
+	(int speed) {
+		front_right_mtr.move(speed);
+		back_right_mtr.move(speed);
+	};
+
 	while (pros::c::millis() - start_time < RUN_TIME)
 	{
 		//Move forward for one second
@@ -108,8 +129,8 @@ improved_pid_move(61.0,180.0,100.0);
 		while(pros::c::millis() - start_time > 1000 && pros::c::millis() - start_time < 2000)
 		{
 			move_all_motors(SET_SPEEDS(ZERO));
-			front_left_mtr.move(HALF);
-			back_left_mtr.move(HALF);
+			turn_ninety_degrees_right(SET_SPEEDS(THREE_QUARTERS));
+			//turn_fourtyfive_degrees_right(SET_SPEEDS(HALF));
 		}
 		//Reverse to the bar
 		while(pros::c::millis() - start_time > 2000 && pros::c::millis() - start_time < RUN_TIME)
@@ -213,7 +234,7 @@ void opcontrol() {
 		back_right_mtr = right;
 		
 		pros::lcd::print(0, "Right: %d", right);
-
+		pros::lcd::print(1, "Left: %d", left);
 		pros::delay(20);
 	}
 }
