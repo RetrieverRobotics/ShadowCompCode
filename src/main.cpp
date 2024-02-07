@@ -230,14 +230,18 @@ void opcontrol() {
 		*/
 
 		//cliber testing <- bro typed cliber 
+		/*
 		intake1 = left;
 		intake2 = left;
-		
+		*/
+
+
 		//For Drive Train
 		front_left_mtr = left;
 		back_left_mtr = left;
 		front_right_mtr = right;
 		back_right_mtr = right;
+
 		
 		pros::lcd::print(0, "Right: %d", right);
 		pros::lcd::print(1, "Left: %d", left);
