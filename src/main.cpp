@@ -174,8 +174,10 @@ void opcontrol() {
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
 	pros::Motor back_right_mtr(13);
-	pros::Motor intake(5); //temp port number, subject to change
-	pros::Motor shooter(6);
+	pros::Motor roller(7); //temp port number, subject to change
+	pros::Motor intake1(9); //temp port number, subject to change
+	pros::Motor intake2(10); //temp port number, subject to change
+	pros::Motor shooter(6); //temp port number, subject to change
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
 	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
@@ -206,27 +208,31 @@ void opcontrol() {
 			}
 		}
 
-		// Intake
+		// Intake Roller
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) { //If R1 gets pressed
 			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
 			toggle[1] = !toggle[1];
 
 			if (toggle[1]) {
-				intake = speeds[1];
+				roller = speeds[1]; 
 			}
 		}
+
+		// Intake Arms 
+		/*
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
+			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+
+		}
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){
+			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+		}
+		*/
+
+		//cliber testing <- bro typed cliber 
+		intake1 = left;
+		intake2 = left;
 		
-		//Climber test
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)){
-
-		}
-
-
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)){
-			
-		}
-
-
 		//For Drive Train
 		front_left_mtr = left;
 		back_left_mtr = left;
