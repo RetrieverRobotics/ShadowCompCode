@@ -86,6 +86,8 @@ improved_pid_move(61.0,180.0,100.0);
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
 	pros::Motor back_right_mtr(13);
+	pros::Motor climber1(15);
+	pros::Motor climber2(16);
 	pros::Motor intake(5); //temp num for shooter & intake, change when programmed
 	pros::Motor shooter(6);
 	pros::ADIGyro gyro(9);
@@ -174,12 +176,17 @@ void opcontrol() {
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
 	pros::Motor back_right_mtr(13);
+	pros::Motor climber1(15);
+	pros::Motor climber2(16);
 	pros::Motor roller(7); //temp port number, subject to change
 	pros::Motor intake1(9); //temp port number, subject to change
 	pros::Motor intake2(10); //temp port number, subject to change
+
 	pros::Motor shooter(6); //temp port number, subject to change
+
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
+	
 	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 
 	while (true) {
@@ -219,16 +226,15 @@ void opcontrol() {
 		}
 
 		// Intake Arms 
-		/*
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
 			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
-
+			climber1.move(SET_SPEEDS(MAX));
 		}
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){
 			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+			climber1.move(SET_SPEEDS(-MAX));
 		}
-		*/
-
+		
 		//cliber testing <- bro typed cliber 
 		/*
 		intake1 = left;
