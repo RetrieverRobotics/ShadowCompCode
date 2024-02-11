@@ -1,4 +1,30 @@
 #include "main.h"
+#include <cmath>
+
+enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
+pros::Motor intake1_arm(9); //temp port number, subject to change
+pros::Motor intake2_arm(10); //temp port number, subject to change
+double motor_pos_error = 0.25;
+
+/*
+* Calibrates the min and max positions for the arms
+*/
+double intake1_min, intake1_max, intake2_min, intake2_max;
+void calibrate_arms() {
+	intake1_arm.move(SET_SPEEDS(HALF));
+	intake2_arm.move(-SET_SPEEDS(HALF));
+	double start_time = pros::c::millis();
+	while (pros::c::millis() - start_time > 3000) {}
+	intake1_min = intake1_arm.get_position();
+	intake2_min = intake2_arm.get_position();
+
+	intake1_arm.move(-SET_SPEEDS(MAX));
+	intake2_arm.move(SET_SPEEDS(MAX));
+	start_time = pros::c::millis();
+	while (pros::c::millis() - start_time > 3000) {}
+	intake1_max = intake1_arm.get_position();
+	intake2_max = intake2_arm.get_position();
+}
 
 /**
  * A callback function for LLEMU's center button. ttwrmwf.ke
@@ -78,7 +104,6 @@ new_gyro_p_turn(180.0,100.0);
 improved_pid_move(61.0,180.0,100.0);
 */
 	const u_int32_t start_time = pros::c::millis();
-	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 	const int TILES = 3;
 	const int MILISECONDPERTILE = 1000; //milisecond/tile when set at HALF speed
 	const int RUN_TIME = TILES * MILISECONDPERTILE;
@@ -176,13 +201,12 @@ void opcontrol() {
 	pros::Motor back_left_mtr(1);
 	pros::Motor front_right_mtr(14);
 	pros::Motor back_right_mtr(13);
-	pros::Motor climber1(15);
-	pros::Motor climber2(16);
+	pros::Motor shooter1(15);
+	pros::Motor shooter2(16);
+	pros::Motor shooter3(17);
 	pros::Motor roller(7); //temp port number, subject to change
-	pros::Motor intake1(9); //temp port number, subject to change
-	pros::Motor intake2(10); //temp port number, subject to change
-
-	pros::Motor shooter(6); //temp port number, subject to change
+	pros::Motor intake1_arm(9); //temp port number, subject to change
+	pros::Motor intake2_arm(10); //temp port number, subject to change
 
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
@@ -211,7 +235,9 @@ void opcontrol() {
 			toggle[0] = !toggle[0];
 
 			if (toggle[0]) {
-				shooter = speeds[0];
+				shooter1 = speeds[0];
+				shooter2 = speeds[0];
+				shooter3 = speeds[0];
 			}
 		}
 
@@ -225,22 +251,35 @@ void opcontrol() {
 			}
 		}
 
-		// Intake Arms 
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
-			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
-			climber1.move(SET_SPEEDS(MAX));
+		// Intake Arms
+		int dir = 0;
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){ //Going Down
+			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+			intake1_arm.move(SET_SPEEDS(HALF));
+			intake2_arm.move(-SET_SPEEDS(HALF));
+			dir = 1;
 		}
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){
-			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
-			climber1.move(SET_SPEEDS(-MAX));
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){ //Going Up
+			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+			intake1_arm.move(-SET_SPEEDS(MAX));
+			intake2_arm.move(SET_SPEEDS(MAX));
+			dir -1;
 		}
-		
-		//cliber testing <- bro typed cliber 
-		/*
-		intake1 = left;
-		intake2 = left;
-		*/
 
+		// Intake edge case control
+		double intake1_pos = intake1_arm.get_position();
+		double intake2_pos = intake2_arm.get_position();
+		if (!dir && (std::abs(intake1_pos - intake1_min) < motor_pos_error || std::abs(intake1_pos - intake1_max) < motor_pos_error)) {
+			intake1_arm.move(0);
+		}
+		if (!dir && (std::abs(intake2_pos - intake2_min) < motor_pos_error || std::abs(intake2_pos - intake2_max) < motor_pos_error)) {
+			intake2_arm.move(0);
+		}
+
+		pros::lcd::print(3, "Intake Arm 1 Range: %f to %f", intake1_min, intake1_max);
+		pros::lcd::print(4, "Intake Arm 2 Range: %f to %f", intake2_min, intake2_max);
+		pros::lcd::print(5, "Intake Arm 1 Pos: %f", intake1_arm.get_position());
+		pros::lcd::print(6, "Intake Arm 2 Pos: %f", intake2_arm.get_position());
 
 		//For Drive Train
 		front_left_mtr = left;
