@@ -7,23 +7,51 @@ pros::Motor intake2_arm(10); //temp port number, subject to change
 double motor_pos_error = 0.25;
 
 /*
+* Determine if motor position is in range
+*/
+bool in_range(double pos, double target) {
+	return std::abs(pos - target) < motor_pos_error;
+}
+
+/*
 * Calibrates the min and max positions for the arms
 */
 double intake1_min, intake1_max, intake2_min, intake2_max;
 void calibrate_arms() {
+	/*
 	intake1_arm.move(SET_SPEEDS(HALF));
 	intake2_arm.move(-SET_SPEEDS(HALF));
 	double start_time = pros::c::millis();
-	while (pros::c::millis() - start_time > 3000) {}
+	while (pros::c::millis() - start_time < 3000) {}
+	*/
 	intake1_min = intake1_arm.get_position();
 	intake2_min = intake2_arm.get_position();
 
-	intake1_arm.move(-SET_SPEEDS(MAX));
-	intake2_arm.move(SET_SPEEDS(MAX));
-	start_time = pros::c::millis();
-	while (pros::c::millis() - start_time > 3000) {}
+	intake1_arm.move(-SET_SPEEDS(QUARTER));
+	intake2_arm.move(SET_SPEEDS(QUARTER));
+	double start_time = pros::c::millis();
+	while (pros::c::millis() - start_time < 1500) {}
 	intake1_max = intake1_arm.get_position();
 	intake2_max = intake2_arm.get_position();
+	
+	auto values1 = "Min/max: " + std::to_string(intake1_min) + " " + std::to_string(intake1_max);
+	auto values2 = std::to_string(intake2_min) + " " + std::to_string(intake2_max);
+	pros::lcd::set_text(1, values1);
+	pros::lcd::set_text(2, values2);
+	intake1_arm.move(SET_SPEEDS(ZERO));
+	intake2_arm.move(SET_SPEEDS(ZERO));
+
+	while (pros::c::millis() - start_time < 3000) {}
+
+	double kP;
+	double kI;
+	double kD;
+	while (in_range(intake1_arm.get_position(), 0) || in_range(intake2_arm.get_position(), 0)) {
+		//kP = intake1_arm.get_position
+		
+		intake1_arm.move(SET_SPEEDS(HALF));
+		intake2_arm.move(-SET_SPEEDS(HALF));
+	}
 }
 
 /**
@@ -52,6 +80,8 @@ void initialize() {
 	pros::lcd::initialize();
 	pros::lcd::set_text(1, "Chaos Control!");
 	pros::lcd::register_btn1_cb(on_center_button);
+
+	calibrate_arms();
 }
 
 /**
@@ -84,7 +114,7 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
+void autonomous() { 
 /*Temp cords for 
 new_gyro_p_turn(47.4,100.0);
 improved_pid_move(86.3,47.4,100.0);
@@ -233,11 +263,14 @@ void opcontrol() {
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) { //If R1 gets pressed
 			//pros::lcd::print(5, "New button press: R2 %d", !toggle[0]);
 			toggle[0] = !toggle[0];
-
 			if (toggle[0]) {
-				shooter1 = speeds[0];
-				shooter2 = speeds[0];
-				shooter3 = speeds[0];
+				shooter1.move(SET_SPEEDS(MAX));
+				shooter2.move(-SET_SPEEDS(MAX));
+				shooter3.move(-SET_SPEEDS(MAX));
+			} else {
+				shooter1.move(SET_SPEEDS(ZERO));
+				shooter2.move(SET_SPEEDS(ZERO));
+				shooter3.move(SET_SPEEDS(ZERO));
 			}
 		}
 
@@ -287,9 +320,10 @@ void opcontrol() {
 		front_right_mtr = right;
 		back_right_mtr = right;
 
-		
+		/*
 		pros::lcd::print(0, "Right: %d", right);
 		pros::lcd::print(1, "Left: %d", left);
+		*/
 		pros::delay(20);
 	}
 }
