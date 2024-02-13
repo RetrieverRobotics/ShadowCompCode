@@ -41,17 +41,35 @@ void calibrate_arms() {
 	intake1_arm.move(SET_SPEEDS(ZERO));
 	intake2_arm.move(SET_SPEEDS(ZERO));
 
-	while (pros::c::millis() - start_time < 3000) {}
+	while (pros::c::millis() - start_time < 1500) {}
 
-	double kP;
-	double kI;
-	double kD;
-	while (in_range(intake1_arm.get_position(), 0) || in_range(intake2_arm.get_position(), 0)) {
-		//kP = intake1_arm.get_position
-		
-		intake1_arm.move(SET_SPEEDS(HALF));
-		intake2_arm.move(-SET_SPEEDS(HALF));
+	//Return to up position TO-DO: Mount some C-channel onto the bot to stop the intake from falling backwards too far.
+	// This will be done after adjusting the heights the of the intake roller arms (which should be done after the ramp)
+	// is installed. Make sure that the intake is leaning back instead of straight-up so that it doesnt fall down as the robot
+	// moves about.
+	while (!in_range(intake1_arm.get_position(), 0) && !in_range(intake2_arm.get_position(), 0)) {
+		double move_speed;
+		double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
+
+		//These values need to be tweaked more to allow for easing
+		// Once done, this loop should be implemented for a decline,
+		// which combined will be used for an intake toggle function.
+		if (avg_offset > 200) {
+			move_speed = SET_SPEEDS(HALF) * 1.25;
+		} else if (avg_offset > 50) {
+			move_speed = SET_SPEEDS(HALF) * 0.50;
+		} else if (avg_offset > 25) {
+			move_speed = SET_SPEEDS(HALF) * 0.35; //I know I could do SET_SPEEDS(QUARTER) but this is a stylistic choice
+		} else {
+			move_speed = SET_SPEEDS(HALF) * 0.25;
+		}
+
+		intake1_arm.move(move_speed);
+		intake2_arm.move(-move_speed);
 	}
+
+	intake1_arm.move(SET_SPEEDS(ZERO));
+	intake2_arm.move(SET_SPEEDS(ZERO));
 }
 
 /**
