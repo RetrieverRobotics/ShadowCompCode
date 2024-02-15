@@ -2,9 +2,11 @@
 #include <cmath>
 
 enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
+enum ARM_DIRECTIONS{CLOSE = 0, OPEN = 1};
 pros::Motor intake1_arm(9); //temp port number, subject to change
 pros::Motor intake2_arm(10); //temp port number, subject to change
-double motor_pos_error = 0.25;
+double motor_pos_error = 50;
+double intake1_min, intake1_max, intake2_min, intake2_max;
 
 /*
 * Determine if motor position is in range
@@ -14,9 +16,63 @@ bool in_range(double pos, double target) {
 }
 
 /*
+* Eases the arm motors towards their target positions
+*/
+void ease_arm_movement(bool direction) {
+
+	//True is towards max, false is towards min (Open/Close)
+	if (direction) {
+		unsigned long int start_time = pros::c::millis();
+		intake1_arm.move(SET_SPEEDS(QUARTER));
+		intake2_arm.move(-SET_SPEEDS(QUARTER));
+
+		while (!in_range(intake1_arm.get_position(), intake1_max) && !in_range(intake2_arm.get_position(), intake2_max) && pros::c::millis() - start_time < 2000) {
+			double move_speed;
+			double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
+
+			//This code needs to be redone to counteract the
+			// force of gravity, although it's low priority
+			if (pros::c::millis() - start_time > 500) {
+				move_speed = -SET_SPEEDS(QUARTER);
+			}
+
+			intake1_arm.move(-move_speed);
+			intake2_arm.move(move_speed);
+		}
+	} else {
+		unsigned long int start_time = pros::c::millis();
+		intake1_arm.move(-SET_SPEEDS(MAX));
+		intake2_arm.move(SET_SPEEDS(MAX));
+
+		while (!in_range(intake1_arm.get_position(), intake1_min) && !in_range(intake2_arm.get_position(), intake2_min) && pros::c::millis() - start_time < 2500) {
+			double move_speed;
+			double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
+
+			//These values need to be tweaked more to allow for easing
+			// Once done, this loop should be implemented for a decline,
+			// which combined will be used for an intake toggle function.
+			if (avg_offset > 200) {
+				move_speed = SET_SPEEDS(HALF) * 1.25;
+			} else if (avg_offset > 50) {
+				move_speed = SET_SPEEDS(HALF) * 0.70;
+			} else if (avg_offset > 25) {
+				move_speed = SET_SPEEDS(HALF) * 0.35; //I know I could do SET_SPEEDS(QUARTER) but this is a stylistic choice
+			} else {
+				move_speed = SET_SPEEDS(HALF) * 0.25;
+			}
+
+			intake1_arm.move(move_speed);
+			intake2_arm.move(-move_speed);
+		}
+	}
+
+	intake1_arm.move(SET_SPEEDS(ZERO));
+	intake2_arm.move(SET_SPEEDS(ZERO));
+}
+
+/*
 * Calibrates the min and max positions for the arms
 */
-double intake1_min, intake1_max, intake2_min, intake2_max;
 void calibrate_arms() {
 	/*
 	intake1_arm.move(SET_SPEEDS(HALF));
@@ -47,29 +103,7 @@ void calibrate_arms() {
 	// This will be done after adjusting the heights the of the intake roller arms (which should be done after the ramp)
 	// is installed. Make sure that the intake is leaning back instead of straight-up so that it doesnt fall down as the robot
 	// moves about.
-	while (!in_range(intake1_arm.get_position(), 0) && !in_range(intake2_arm.get_position(), 0)) {
-		double move_speed;
-		double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
-
-		//These values need to be tweaked more to allow for easing
-		// Once done, this loop should be implemented for a decline,
-		// which combined will be used for an intake toggle function.
-		if (avg_offset > 200) {
-			move_speed = SET_SPEEDS(HALF) * 1.25;
-		} else if (avg_offset > 50) {
-			move_speed = SET_SPEEDS(HALF) * 0.50;
-		} else if (avg_offset > 25) {
-			move_speed = SET_SPEEDS(HALF) * 0.35; //I know I could do SET_SPEEDS(QUARTER) but this is a stylistic choice
-		} else {
-			move_speed = SET_SPEEDS(HALF) * 0.25;
-		}
-
-		intake1_arm.move(move_speed);
-		intake2_arm.move(-move_speed);
-	}
-
-	intake1_arm.move(SET_SPEEDS(ZERO));
-	intake2_arm.move(SET_SPEEDS(ZERO));
+	ease_arm_movement(ARM_DIRECTIONS(CLOSE));
 }
 
 /**
@@ -258,22 +292,23 @@ void opcontrol() {
 
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
-	
-	enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 
 	while (true) {
 		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
 		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
 		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
-						 
+
+		//Twin stick movement	 
 		int left = master.get_analog(ANALOG_LEFT_Y);
 		int right = master.get_analog(ANALOG_RIGHT_Y);
 
-		static bool toggle[2] {{false}}; //Intake at 0, Shooter at 1
+		//Initialize with the intake and shooter toggled off
+		// Note: Intake at i=0, Shooter at i=1
+		static bool toggle[2] {{false}}; 
 		static int speeds[2] {{SET_SPEEDS(ZERO)}}; 
 
+		//Toggles speed between values in SET_SPEEDS enum
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-			//toggles speed between values in SET_SPEEDS enum
 			speeds[1] = speeds[1] == 0 ? 31 : (speeds[1] + 32) % 159;
 		}
 
@@ -293,7 +328,7 @@ void opcontrol() {
 		}
 
 		// Intake Roller
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) { //If R1 gets pressed
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
 			pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
 			toggle[1] = !toggle[1];
 
@@ -303,28 +338,33 @@ void opcontrol() {
 		}
 
 		// Intake Arms
-		int dir = 0;
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){ //Going Down
+		static int dir = 0; //1=Open, -1=Close
+		
+		//Going Down
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){ 
 			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
-			intake1_arm.move(SET_SPEEDS(HALF));
-			intake2_arm.move(-SET_SPEEDS(HALF));
+			intake1_arm.move(SET_SPEEDS(MAX));
+			intake2_arm.move(-SET_SPEEDS(MAX));
 			dir = 1;
 		}
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){ //Going Up
+		//Going Up
+		else if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){ 
 			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
 			intake1_arm.move(-SET_SPEEDS(MAX));
 			intake2_arm.move(SET_SPEEDS(MAX));
-			dir -1;
+			dir = -1;
 		}
 
-		// Intake edge case control
 		double intake1_pos = intake1_arm.get_position();
 		double intake2_pos = intake2_arm.get_position();
-		if (!dir && (std::abs(intake1_pos - intake1_min) < motor_pos_error || std::abs(intake1_pos - intake1_max) < motor_pos_error)) {
-			intake1_arm.move(0);
-		}
-		if (!dir && (std::abs(intake2_pos - intake2_min) < motor_pos_error || std::abs(intake2_pos - intake2_max) < motor_pos_error)) {
-			intake2_arm.move(0);
+
+		//Auto shutoff for the arms once they're in range
+		if (dir == 1 && in_range(intake1_pos, intake1_max) && in_range(intake2_pos, intake2_max)) {
+			intake1_arm.move(SET_SPEEDS(ZERO));
+			intake2_arm.move(SET_SPEEDS(ZERO));
+		} else if (dir == -1 && in_range(intake1_pos, intake1_min) && in_range(intake2_pos, intake2_min)) {
+			intake1_arm.move(SET_SPEEDS(ZERO));
+			intake2_arm.move(SET_SPEEDS(ZERO));
 		}
 
 		pros::lcd::print(3, "Intake Arm 1 Range: %f to %f", intake1_min, intake1_max);
