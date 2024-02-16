@@ -3,8 +3,9 @@
 
 enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 enum ARM_DIRECTIONS{CLOSE = 0, OPEN = 1};
-pros::Motor intake1_arm(9); //temp port number, subject to change
-pros::Motor intake2_arm(10); //temp port number, subject to change
+pros::Motor intake1_arm(9); 
+pros::Motor intake2_arm(10);
+pros::Motor indexer; //Not added to bot yet
 double motor_pos_error = 50;
 double intake1_min, intake1_max, intake2_min, intake2_max;
 
@@ -26,12 +27,14 @@ void ease_arm_movement(bool direction) {
 		intake1_arm.move(SET_SPEEDS(QUARTER));
 		intake2_arm.move(-SET_SPEEDS(QUARTER));
 
+		//Move until position reached or timout
 		while (!in_range(intake1_arm.get_position(), intake1_max) && !in_range(intake2_arm.get_position(), intake2_max) && pros::c::millis() - start_time < 2000) {
 			double move_speed;
 			double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
 
-			//This code needs to be redone to counteract the
-			// force of gravity, although it's low priority
+			//TO-DO: Rewrite this code so that it's lowering
+			// at a consistent speed opposite to the force of
+			// graity. This is currently a low-priority.
 			if (pros::c::millis() - start_time > 500) {
 				move_speed = -SET_SPEEDS(QUARTER);
 			}
@@ -44,6 +47,7 @@ void ease_arm_movement(bool direction) {
 		intake1_arm.move(-SET_SPEEDS(MAX));
 		intake2_arm.move(SET_SPEEDS(MAX));
 
+		//Move until position reached or timout
 		while (!in_range(intake1_arm.get_position(), intake1_min) && !in_range(intake2_arm.get_position(), intake2_min) && pros::c::millis() - start_time < 2500) {
 			double move_speed;
 			double avg_offset = (std::abs(intake1_arm.get_position()) + std::abs(intake2_arm.get_position())) / 2;
@@ -66,6 +70,7 @@ void ease_arm_movement(bool direction) {
 		}
 	}
 
+	//Stop moving to prevent motor burnout
 	intake1_arm.move(SET_SPEEDS(ZERO));
 	intake2_arm.move(SET_SPEEDS(ZERO));
 }
@@ -74,36 +79,54 @@ void ease_arm_movement(bool direction) {
 * Calibrates the min and max positions for the arms
 */
 void calibrate_arms() {
-	/*
-	intake1_arm.move(SET_SPEEDS(HALF));
-	intake2_arm.move(-SET_SPEEDS(HALF));
-	double start_time = pros::c::millis();
-	while (pros::c::millis() - start_time < 3000) {}
-	*/
+	//Record start position
 	intake1_min = intake1_arm.get_position();
 	intake2_min = intake2_arm.get_position();
 
+	//Open (lower) the arms
 	intake1_arm.move(-SET_SPEEDS(QUARTER));
 	intake2_arm.move(SET_SPEEDS(QUARTER));
-	double start_time = pros::c::millis();
-	while (pros::c::millis() - start_time < 1500) {}
+	
+	pros::delay(1500);
+	
+	//Record end position
 	intake1_max = intake1_arm.get_position();
 	intake2_max = intake2_arm.get_position();
 	
+	//Print min and max values 
 	auto values1 = "Min/max: " + std::to_string(intake1_min) + " " + std::to_string(intake1_max);
 	auto values2 = std::to_string(intake2_min) + " " + std::to_string(intake2_max);
 	pros::lcd::set_text(1, values1);
 	pros::lcd::set_text(2, values2);
+	
+	//Stop trying to open (to avoid burnout)
 	intake1_arm.move(SET_SPEEDS(ZERO));
 	intake2_arm.move(SET_SPEEDS(ZERO));
 
-	while (pros::c::millis() - start_time < 1500) {}
+	pros::delay(1500);
 
-	//Return to up position TO-DO: Mount some C-channel onto the bot to stop the intake from falling backwards too far.
-	// This will be done after adjusting the heights the of the intake roller arms (which should be done after the ramp)
-	// is installed. Make sure that the intake is leaning back instead of straight-up so that it doesnt fall down as the robot
-	// moves about.
+	//Return to closed (up) position
 	ease_arm_movement(ARM_DIRECTIONS(CLOSE));
+}
+
+/*
+* Moves indexer (not currently implemented on bot)
+*/
+void move_indexer(int dir) {
+	//Move forwards (towards shooter)
+	if (dir == 1) {
+		indexer.move(SET_SPEEDS(MAX));
+	}
+
+	//Move backwards (towards intake)
+	else if (dir == -1) {
+		indexer.move(-SET_SPEEDS(MAX));
+	}
+
+	//Stop moving indexer
+	else {
+		indexer.move(SET_SPEEDS(ZERO));
+	}
 }
 
 /**
@@ -116,7 +139,7 @@ void on_center_button() {
 	static bool pressed = false;
 	pressed = !pressed;
 	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
+
 	} else {
 		pros::lcd::clear_line(2);
 	}
@@ -185,6 +208,7 @@ improved_pid_move(33.1,94.4,100.0);
 new_gyro_p_turn(180.0,100.0);
 improved_pid_move(61.0,180.0,100.0);
 */
+	/*
 	const u_int32_t start_time = pros::c::millis();
 	const int TILES = 3;
 	const int MILISECONDPERTILE = 1000; //milisecond/tile when set at HALF speed
@@ -262,6 +286,7 @@ improved_pid_move(61.0,180.0,100.0);
 	front_right_mtr.move(SET_SPEEDS(ZERO));
 	back_left_mtr.move(SET_SPEEDS(ZERO));
 	back_right_mtr.move(SET_SPEEDS(ZERO));
+	*/
 }
 
 /**
@@ -278,6 +303,7 @@ improved_pid_move(61.0,180.0,100.0);
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+	//Initialize values
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 	pros::Motor front_left_mtr(2);
 	pros::Motor back_left_mtr(1);
@@ -286,18 +312,35 @@ void opcontrol() {
 	pros::Motor shooter1(15);
 	pros::Motor shooter2(16);
 	pros::Motor shooter3(17);
-	pros::Motor roller(7); //temp port number, subject to change
-	pros::Motor intake1_arm(9); //temp port number, subject to change
-	pros::Motor intake2_arm(10); //temp port number, subject to change
-
+	pros::Motor roller(7); 
+	pros::Motor intake1_arm(9); 
+	pros::Motor intake2_arm(10);
 	front_right_mtr.set_reversed(true);
 	back_right_mtr.set_reversed(true);
 
+	/*
+	*                **Controls**
+	* -------------------------------------------
+	* | Left analog X -                          |
+	* | Left analog Y - Left wheel drive         |
+	* | Right analog X -                         |
+	* | Right analog Y - Right wheel drive       |
+	* | Face Button A - Move indexer forward     |
+	* | Face Button B - Move intake up           |
+	* | Face Button X - Move intake down         |
+	* | Face Button Y - Move indexer backward    |
+	* | Face Button Up -                         |
+	* | Face Button Down - Turn indexer off      |
+	* | Face Button Left -                       |
+	* | Face Button Right -                      |
+	* | Shoulder Button R1 -                     |
+	* | Shoulder Button R2 - Toggle shooter      |
+	* | Shoulder Button L1 - Adjust shooter spd  |
+	* | Shoulder Button L2 -                     |
+	* -------------------------------------------
+	* 
+	*/
 	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);
-
 		//Twin stick movement	 
 		int left = master.get_analog(ANALOG_LEFT_Y);
 		int right = master.get_analog(ANALOG_RIGHT_Y);
@@ -313,7 +356,7 @@ void opcontrol() {
 		}
 
 		//Shooter Controls
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) { //If R1 gets pressed
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) { //If R2 gets pressed
 			//pros::lcd::print(5, "New button press: R2 %d", !toggle[0]);
 			toggle[0] = !toggle[0];
 			if (toggle[0]) {
@@ -347,6 +390,7 @@ void opcontrol() {
 			intake2_arm.move(-SET_SPEEDS(MAX));
 			dir = 1;
 		}
+
 		//Going Up
 		else if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)){ 
 			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
@@ -367,21 +411,15 @@ void opcontrol() {
 			intake2_arm.move(SET_SPEEDS(ZERO));
 		}
 
-		pros::lcd::print(3, "Intake Arm 1 Range: %f to %f", intake1_min, intake1_max);
-		pros::lcd::print(4, "Intake Arm 2 Range: %f to %f", intake2_min, intake2_max);
 		pros::lcd::print(5, "Intake Arm 1 Pos: %f", intake1_arm.get_position());
 		pros::lcd::print(6, "Intake Arm 2 Pos: %f", intake2_arm.get_position());
 
-		//For Drive Train
+		//Set Drive Train motor speeds
 		front_left_mtr = left;
 		back_left_mtr = left;
 		front_right_mtr = right;
 		back_right_mtr = right;
 
-		/*
-		pros::lcd::print(0, "Right: %d", right);
-		pros::lcd::print(1, "Left: %d", left);
-		*/
 		pros::delay(20);
 	}
 }
