@@ -24,7 +24,7 @@ using namespace std;
 #define FRONT_LEFT_MOTOR 2
 #define BACK_LEFT_MOTOR 1
 #define FRONT_RIGHT_MOTOR 14
-#define BACK_RIGHT_MOTOR
+#define BACK_RIGHT_MOTOR 13
 
 //Shooter Motors
 #define BOTTOM_SHOOTER_MOTOR 15
