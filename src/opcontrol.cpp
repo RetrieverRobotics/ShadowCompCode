@@ -39,7 +39,8 @@ using namespace std;
 #define RIGHT_INTAKE_ARM_MOTOR 10
 
 enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
-enum ARM_DIRECTIONS{CLOSE = 0, OPEN = 1};
+enum ARM_DIRECTIONS{CLOSE = 0, OPEN = 1}; 
+
 
 void umbc::Robot::opcontrol() {
 
@@ -124,12 +125,12 @@ void umbc::Robot::opcontrol() {
 		static int speeds[2] {{SET_SPEEDS(ZERO)}}; 
 
         //Toggles speed between values in SET_SPEEDS enum
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+		if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
 			speeds[1] = speeds[1] == 0 ? 31 : (speeds[1] + 32) % 159;
 		}
 
         // Shooter 
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) { //If R2 gets pressed
+        if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) { //If R2 gets pressed
 			//pros::lcd::print(5, "New button press: R2 %d", !toggle[0]);
             //even tho I assigned motor groups, I have to do them manually to reverse specific motors >:(
 			toggle[0] = !toggle[0];
