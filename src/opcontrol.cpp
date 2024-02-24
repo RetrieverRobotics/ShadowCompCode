@@ -135,26 +135,62 @@ void umbc::Robot::opcontrol() {
             //even tho I assigned motor groups, I have to do them manually to reverse specific motors >:(
 			toggle[0] = !toggle[0];
 			if (toggle[0]) {
-				shooter_top_motor.move(SET_SPEEDS(MAX));
-				shooter_middle_motor.move(-SET_SPEEDS(MAX));
-				shooter_bottom_motor.move(-SET_SPEEDS(MAX));
+				shooter_top_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+				shooter_middle_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+				shooter_bottom_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
 			} else {
-				shooter_top_motor.move(SET_SPEEDS(ZERO));
-				shooter_middle_motor.move(-SET_SPEEDS(ZERO));
-				shooter_bottom_motor.move(-SET_SPEEDS(ZERO));
+				shooter_top_motor.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+				shooter_middle_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+				shooter_bottom_motor.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
 			}
 		}
 
         //Toggle for Intake Roller
-        if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+        if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
             pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
             toggle[1] = !toggle[1];
 
 			if (toggle[1]) {
-				roller = speeds[1]; 
-			}
+				roller.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+			} else {
+                roller.move_velocity(ZERO);
+            }
         }
 
+        //Intake Arms
+        int dir = 0;
+		if (controller_master->get_digital(pros::E_CONTROLLER_DIGITAL_X)){ //Going Down
+			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+			left_intake_arm.move_velocity(MOTOR_BLUE_GEAR_MULTIPLIER);
+			right_intake_arm.move_velocity(-MOTOR_BLUE_GEAR_MULTIPLIER);
+			dir = 1;
+		}
+		if (controller_master->get_digital(pros::E_CONTROLLER_DIGITAL_B)){ //Going Up
+			//pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+			left_intake_arm.move(-MOTOR_BLUE_GEAR_MULTIPLIER);
+			right_intake_arm.move(MOTOR_BLUE_GEAR_MULTIPLIER);
+			dir -1;
+		}
+
+/*
+// Intake edge case control
+		double intake1_pos = intake1_arm.get_position();
+		double intake2_pos = intake2_arm.get_position();
+		if (!dir && (std::abs(intake1_pos - intake1_min) < motor_pos_error || std::abs(intake1_pos - intake1_max) < motor_pos_error)) {
+			intake1_arm.move(0);
+		}
+		if (!dir && (std::abs(intake2_pos - intake2_min) < motor_pos_error || std::abs(intake2_pos - intake2_max) < motor_pos_error)) {
+			intake2_arm.move(0);
+		}
+
+		pros::lcd::print(3, "Intake Arm 1 Range: %f to %f", intake1_min, intake1_max);
+		pros::lcd::print(4, "Intake Arm 2 Range: %f to %f", intake2_min, intake2_max);
+		pros::lcd::print(5, "Intake Arm 1 Pos: %f", intake1_arm.get_position());
+		pros::lcd::print(6, "Intake Arm 2 Pos: %f", intake2_arm.get_position());
+
+
+
+*/
 
 
         // required loop delay (do not edit)
