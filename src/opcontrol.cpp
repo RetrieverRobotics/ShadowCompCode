@@ -145,6 +145,16 @@ void umbc::Robot::opcontrol() {
 			}
 		}
 
+        //Toggle for Intake Roller
+        if (controller_master->get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+            pros::lcd::print(5, "New button press: L2 %d", !toggle[1]);
+            toggle[1] = !toggle[1];
+
+			if (toggle[1]) {
+				roller = speeds[1]; 
+			}
+        }
+
 
 
         // required loop delay (do not edit)
