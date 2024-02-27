@@ -95,7 +95,7 @@ void umbc::Robot::opcontrol() {
 * | Face Button B - Move intake up           |
 * | Face Button X - Move intake down         |
 * | Face Button Y - Move indexer backward    |
-* | Face Button Up -                         |
+* | Face Button Up - Toggle tank/arcade      |
 * | Face Button Down - Turn indexer off      |
 * | Face Button Left -                       |
 * | Face Button Right -                      |
@@ -106,18 +106,28 @@ void umbc::Robot::opcontrol() {
 * -------------------------------------------
 * 
 */
-       // set velocity for drive (arcade controls)
+        //Handle arcade/tank toggle
+        static bool is_arcade = 1;
+        is_arcade = controller_master->get_digital_new_press(E_CONTROLLER_DIGITAL_DOWN) ? !is_arcade : is_arcade;
+
+        //Set velocity for drive (arcade controls)
         int32_t tank_left_y = controller_master->get_analog(E_CONTROLLER_ANALOG_LEFT_Y);
         int32_t tank_right_y = controller_master->get_analog(E_CONTROLLER_ANALOG_RIGHT_Y);
 
-        int32_t drive_left_velocity = (int32_t)(((double)(tank_left_y) / (double)E_CONTROLLER_ANALOG_MAX)
-                                        * MOTOR_BLUE_GEAR_MULTIPLIER);
+        //Arcade vs Tank
+        if (is_arcade) {
+            int32_t drive_left_velocity = (int32_t)(((double)(tank_left_y) / (double)E_CONTROLLER_ANALOG_MAX)
+                                            * MOTOR_BLUE_GEAR_MULTIPLIER);
 
-        int32_t drive_right_velocity = (int32_t)(((double)(tank_right_y) / (double)E_CONTROLLER_ANALOG_MAX)
-                                        * MOTOR_BLUE_GEAR_MULTIPLIER);                                
+            int32_t drive_right_velocity = (int32_t)(((double)(tank_right_y) / (double)E_CONTROLLER_ANALOG_MAX)
+                                            * MOTOR_BLUE_GEAR_MULTIPLIER);                                
 
-        drive_left.move_velocity(drive_left_velocity);
-        drive_right.move_velocity(drive_right_velocity);
+            drive_left.move_velocity(drive_left_velocity);
+            drive_right.move_velocity(drive_right_velocity);
+        } else {
+            drive_left.move_velocity(tank_left_y);
+            drive_right.move_velocity(tank_right_y);
+        }
 
         //Initialize with the intake and shooter toggled off
 		// Note: Intake at i=0, Shooter at i=1
