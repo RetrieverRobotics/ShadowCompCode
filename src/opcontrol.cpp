@@ -10,6 +10,7 @@
 #include "umbc.h"
 
 #include <cstdint>
+#include <cmath>
 
 using namespace pros;
 using namespace umbc;
@@ -41,10 +42,18 @@ using namespace std;
 enum SET_SPEEDS{ZERO = 0, QUARTER = 127/4, HALF = 127/2, THREE_QUARTERS = (int)(0.75 * 127), MAX = 127}; //25%, 50%, 75%, 100%
 enum ARM_DIRECTIONS{CLOSE = 0, OPEN = 1}; 
 
-
 int cycle_positions[2][8] = {0}; //Need to be set during initialization
 void cycle_intake_pos(bool dir, pros::Motor &base, pros::Motor &joint) {
     static short int current_cycle_pos = 0;
+    const int ERROR_MARGIN = 30;
+
+    //Move the motor until close to target
+    auto go_to = [](pros::Motor m, int pos, bool direction, int speed=SET_SPEEDS(HALF)) {
+        while (std::abs(m.get_position() - pos) > ERROR_MARGIN) {
+            m = direction ? speed : speed * -1;
+        }
+    };
+
     current_cycle_pos = dir ? current_cycle_pos + 1 : current_cycle_pos - 1;
 
     if (current_cycle_pos < 0)
@@ -52,8 +61,8 @@ void cycle_intake_pos(bool dir, pros::Motor &base, pros::Motor &joint) {
     else if (current_cycle_pos == 8)
         current_cycle_pos = 0;
     
-    base = cycle_positions[0][current_cycle_pos];
-    joint = cycle_positions[1][current_cycle_pos];
+    go_to(base, cycle_positions[0][current_cycle_pos], dir);
+    go_to(base, cycle_positions[1][current_cycle_pos], dir);
 }
 
 void umbc::Robot::opcontrol() {
